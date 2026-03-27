@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptGrab — Video to Text, Instantly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#ffffff;
+    --bg-raised:#f5f5f5;
+    --bg-card:#ffffff;
+    --bg-input:#f0f0f0;
+    --border:#e0e0e0;
+    --border-subtle:#eaeaea;
+    --text:#111111;
+    --text-secondary:#555555;
+    --text-dim:#999999;
+    --accent:#E73C37;
+    --accent-hover:#cc2f2a;
+    --accent-glow:rgba(231,60,55,0.05);
+    --accent-soft:rgba(231,60,55,0.08);
+    --green:#16a34a;
+    --blue:#2563eb;
+    --radius:10px;
+    --radius-lg:16px;
+    --font-body:'Outfit',sans-serif;
+    --font-display:'Outfit',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  html{scroll-behavior:smooth;font-size:16px}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* ── NAV ── */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    padding:1.25rem 2rem;
+    display:flex;align-items:center;justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border-subtle);
+    transition:background .3s;
+  }
+  .nav-logo{
+    font-family:var(--font-display);
+    font-size:1.375rem;
+    color:var(--text);
+    text-decoration:none;
+    letter-spacing:-0.02em;
+    font-weight:600;
+  }
+  .nav-logo span{color:var(--accent);font-weight:600}
+  .nav-links{display:flex;gap:2rem;align-items:center}
+  .nav-links a{
+    color:var(--text-secondary);font-size:0.875rem;
+    text-decoration:none;transition:color .2s;font-weight:400;
+  }
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{
+    background:var(--text);color:#fff;
+    padding:0.5rem 1.25rem;border-radius:8px;
+    font-size:0.8125rem;font-weight:500;
+    text-decoration:none;transition:all .2s;
+    border:none;cursor:pointer;
+    font-family:var(--font-body);
+  }
+  .nav-cta:hover{background:#333;transform:translateY(-1px)}
+
+  /* ── HERO ── */
+  .hero{
+    min-height:100vh;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    text-align:center;
+    padding:8rem 2rem 4rem;
+    position:relative;
+  }
+  .hero::before{
+    content:'';position:absolute;
+    top:-20%;left:50%;transform:translateX(-50%);
+    width:800px;height:800px;
+    background:radial-gradient(circle,rgba(231,60,55,0.03) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:0.5rem;
+    padding:0.375rem 1rem;
+    border:1px solid var(--border);
+    border-radius:100px;
+    font-size:0.75rem;
+    color:var(--text-secondary);
+    margin-bottom:2rem;
+    background:var(--bg-raised);
+    animation:fadeUp .8s ease both;
+  }
+  .hero-badge .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+  }
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:clamp(3rem,6.5vw,5rem);
+    line-height:1.1;
+    letter-spacing:-0.03em;
+    font-weight:700;
+    max-width:720px;
+    margin-bottom:1.5rem;
+    animation:fadeUp .8s ease .1s both;
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--accent);
+  }
+  .hero-sub{
+    font-size:1.125rem;
+    color:var(--text-secondary);
+    max-width:520px;
+    line-height:1.7;
+    margin-bottom:3rem;
+    font-weight:300;
+    animation:fadeUp .8s ease .2s both;
+  }
+
+  /* ── INPUT BAR ── */
+  .input-bar{
+    width:100%;max-width:640px;
+    display:flex;gap:0;
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:var(--bg-input);
+    overflow:hidden;
+    transition:border-color .3s,box-shadow .3s;
+    animation:fadeUp .8s ease .3s both;
+  }
+  .input-bar:focus-within{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft),0 8px 32px rgba(0,0,0,0.06);
+  }
+  .input-bar input{
+    flex:1;
+    padding:1rem 1.25rem;
+    background:transparent;border:none;outline:none;
+    color:var(--text);font-size:0.9375rem;
+    font-family:var(--font-body);
+  }
+  .input-bar input::placeholder{color:var(--text-dim)}
+  .input-bar button{
+    padding:1rem 1.75rem;
+    background:var(--text);color:#fff;
+    border:none;cursor:pointer;
+    font-weight:500;font-size:0.875rem;
+    font-family:var(--font-body);
+    transition:background .2s;
+    white-space:nowrap;
+  }
+  .input-bar button:hover{background:var(--accent)}
+
+  .time-range{
+    display:flex;align-items:center;gap:0.75rem;
+    margin-top:0.875rem;
+    animation:fadeUp .8s ease .35s both;
+  }
+  .time-field{display:flex;flex-direction:column;gap:0.25rem}
+  .time-field label{
+    font-size:0.6875rem;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    font-weight:500;
+  }
+  .time-field input{
+    width:90px;
+    padding:0.5rem 0.75rem;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--bg-input);
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:0.8125rem;
+    text-align:center;
+    outline:none;
+    transition:border-color .2s;
+  }
+  .time-field input:focus{border-color:var(--accent)}
+  .time-field input::placeholder{color:var(--text-dim)}
+  .time-field select{
+    padding:0.5rem 0.75rem;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--bg-input);
+    color:var(--text-secondary);
+    font-family:var(--font-body);
+    font-size:0.8125rem;
+    outline:none;
+    cursor:pointer;
+    transition:border-color .2s, color .2s;
+    -webkit-appearance:none;
+    min-width:110px;
+  }
+  .time-field select:focus{border-color:var(--accent)}
+  .time-field select.selected{color:var(--text)}
+  .time-sep{color:var(--text-dim);margin-top:1rem;font-size:0.875rem}
+
+  .hero-or{
+    color:var(--text-dim);
+    font-size:0.8125rem;
+    margin:1rem 0;
+    animation:fadeUp .8s ease .35s both;
+  }
+  .upload-btn{
+    display:inline-flex;align-items:center;gap:0.5rem;
+    padding:0.625rem 1.5rem;
+    border:1px dashed var(--border);
+    border-radius:8px;
+    background:transparent;
+    color:var(--text-secondary);
+    font-size:0.8125rem;
+    cursor:pointer;
+    transition:all .25s;
+    font-family:var(--font-body);
+    animation:fadeUp .8s ease .4s both;
+  }
+  .upload-btn:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:var(--accent-glow);
+  }
+  .upload-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5}
+
+  .hero-formats{
+    margin-top:2.5rem;
+    display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;
+    animation:fadeUp .8s ease .5s both;
+  }
+  .format-tag{
+    padding:0.25rem 0.625rem;
+    font-size:0.6875rem;
+    font-family:var(--font-mono);
+    color:var(--text-dim);
+    border:1px solid var(--border-subtle);
+    border-radius:6px;
+    background:var(--bg-raised);
+  }
+
+  /* ── SECTION COMMON ── */
+  section{padding:6rem 2rem}
+  .section-inner{max-width:1100px;margin:0 auto}
+  .section-label{
+    font-size:0.8125rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--text-dim);
+    font-weight:500;
+    margin-bottom:0.75rem;
+    display:flex;align-items:center;gap:0.5rem;
+  }
+  .section-label::before{
+    content:'';
+    width:8px;height:8px;
+    border-radius:50%;
+    background:var(--accent);
+    display:inline-block;
+  }
+  .section-title{
+    font-family:var(--font-display);
+    font-size:clamp(1.875rem,3.5vw,2.75rem);
+    line-height:1.15;
+    letter-spacing:-0.025em;
+    font-weight:700;
+    margin-bottom:1rem;
+  }
+  .section-desc{
+    color:var(--text-secondary);
+    font-size:1rem;
+    max-width:500px;
+    line-height:1.7;
+    font-weight:300;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1.5rem;
+    margin-top:3.5rem;
+  }
+  .step{
+    background:var(--bg-card);
+    border:1px solid var(--border-subtle);
+    border-radius:var(--radius-lg);
+    padding:2.25rem 2rem;
+    position:relative;
+    transition:border-color .3s,transform .3s;
+  }
+  .step:hover{border-color:var(--border);transform:translateY(-2px);box-shadow:0 4px 24px rgba(0,0,0,0.05)}
+  .step-num{
+    font-family:var(--font-mono);
+    font-size:0.6875rem;
+    color:var(--accent);
+    padding:0.25rem 0.625rem;
+    background:var(--accent-glow);
+    border:1px solid var(--accent-soft);
+    border-radius:6px;
+    display:inline-block;
+    margin-bottom:1.25rem;
+  }
+  .step-icon{
+    width:48px;height:48px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-bottom:1.25rem;
+    color:var(--text-secondary);
+  }
+  .step-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5}
+  .step h3{
+    font-size:1.0625rem;
+    font-weight:500;
+    margin-bottom:0.5rem;
+    letter-spacing:-0.01em;
+  }
+  .step p{
+    font-size:0.875rem;
+    color:var(--text-secondary);
+    line-height:1.65;
+    font-weight:300;
+  }
+  .step-connector{
+    display:none;
+    position:absolute;right:-1.5rem;top:50%;
+    transform:translateY(-50%);
+    color:var(--text-dim);
+  }
+
+  /* ── FEATURES ── */
+  .features-section{background:var(--bg-raised)}
+  .features-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--border-subtle);
+    border:1px solid var(--border-subtle);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    margin-top:3.5rem;
+  }
+  .feature{
+    background:var(--bg-raised);
+    padding:2.25rem 2rem;
+    transition:background .3s;
+  }
+  .feature:hover{background:var(--bg-card)}
+  .feature-icon{
+    width:40px;height:40px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:1.25rem;
+    font-size:1.5rem;
+  }
+  .feature h3{
+    font-size:0.9375rem;
+    font-weight:500;
+    margin-bottom:0.375rem;
+    letter-spacing:-0.01em;
+  }
+  .feature p{
+    font-size:0.8125rem;
+    color:var(--text-secondary);
+    line-height:1.6;
+    font-weight:300;
+  }
+
+  /* ── OUTPUT PREVIEW ── */
+  .preview-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:3.5rem;margin-bottom:0;
+  }
+  .preview-container{
+    border:1px solid var(--border-subtle);
+    border-radius:var(--radius-lg);
+    overflow:hidden;
+    margin-top:1.5rem;
+    background:var(--bg-card);
+  }
+  .preview-toolbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0.875rem 1.5rem;
+    border-bottom:1px solid var(--border-subtle);
+    background:var(--bg-raised);
+  }
+  .preview-dots{display:flex;gap:6px}
+  .preview-dots span{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--border);
+  }
+  .preview-dots span:first-child{background:#ef4444}
+  .preview-dots span:nth-child(2){background:#eab308}
+  .preview-dots span:nth-child(3){background:#22c55e}
+  .preview-file{
+    font-family:var(--font-mono);
+    font-size:0.75rem;
+    color:var(--text-dim);
+  }
+  .download-btns{display:flex;gap:0.5rem}
+  .dl-btn{
+    padding:0.3rem 0.75rem;
+    font-size:0.6875rem;
+    font-family:var(--font-body);
+    font-weight:500;
+    border:1px solid var(--border);
+    border-radius:6px;
+    background:var(--bg);
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .dl-btn:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+    background:var(--accent-glow);
+  }
+  .preview-tabs{
+    display:flex;gap:0;
+    border-bottom:1px solid var(--border-subtle);
+  }
+  .preview-tab{
+    padding:0.75rem 1.5rem;
+    font-size:0.8125rem;
+    color:var(--text-dim);
+    border:none;background:transparent;
+    cursor:pointer;font-family:var(--font-body);
+    border-bottom:2px solid transparent;
+    transition:all .2s;
+  }
+  .preview-tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+    background:var(--accent-glow);
+  }
+  .preview-tab:hover:not(.active){color:var(--text-secondary)}
+  .preview-content{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    min-height:320px;
+  }
+  .preview-pane{
+    padding:1.75rem;
+    font-size:0.8125rem;
+    line-height:1.8;
+    color:var(--text-secondary);
+    font-weight:300;
+  }
+  .preview-pane:first-child{
+    border-right:1px solid var(--border-subtle);
+  }
+  .pane-label{
+    font-family:var(--font-mono);
+    font-size:0.6875rem;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:1rem;
+    display:flex;align-items:center;gap:0.5rem;
+  }
+  .pane-label .lang-dot{
+    width:8px;height:8px;
+    border-radius:50%;
+  }
+  .pane-label .lang-dot.en{background:var(--blue)}
+  .pane-label .lang-dot.ko{background:var(--accent)}
+  .preview-pane p{margin-bottom:0.75rem}
+  .preview-pane .timestamp{
+    font-family:var(--font-mono);
+    font-size:0.6875rem;
+    color:var(--text-dim);
+    margin-right:0.5rem;
+  }
+
+  /* ── CTA ── */
+  .cta-section{text-align:center;padding:8rem 2rem}
+  .cta-section .section-title{
+    max-width:600px;margin:0 auto 1rem;
+  }
+  .cta-section .section-desc{
+    max-width:420px;margin:0 auto 2.5rem;
+  }
+  .cta-code{
+    display:inline-block;
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1rem 2rem;
+    font-family:var(--font-mono);
+    font-size:0.875rem;
+    color:var(--text);
+    margin-bottom:1rem;
+    letter-spacing:-0.01em;
+  }
+  .cta-code .prompt{color:var(--accent)}
+  .cta-code .cmd{color:var(--text-secondary)}
+
+  /* ── FOOTER ── */
+  footer{
+    border-top:1px solid var(--border-subtle);
+    padding:2.5rem 2rem;
+    display:flex;align-items:center;justify-content:space-between;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .footer-left{
+    font-size:0.8125rem;
+    color:var(--text-dim);
+  }
+  .footer-left a{color:var(--text-secondary);text-decoration:none}
+  .footer-right{display:flex;gap:1.5rem}
+  .footer-right a{
+    color:var(--text-dim);font-size:0.8125rem;
+    text-decoration:none;transition:color .2s;
+  }
+  .footer-right a:hover{color:var(--text-secondary)}
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px){
+    nav{padding:1rem 1.25rem}
+    .nav-links{display:none}
+    .hero{padding:7rem 1.25rem 3rem}
+    .steps{grid-template-columns:1fr;gap:1rem}
+    .features-grid{grid-template-columns:1fr}
+    .preview-content{grid-template-columns:1fr}
+    .preview-pane:first-child{border-right:none;border-bottom:1px solid var(--border-subtle)}
+    footer{flex-direction:column;gap:1rem;text-align:center}
+  }
+  @media(max-width:480px){
+    .input-bar{flex-direction:column}
+    .input-bar button{padding:0.875rem}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Script<span>grab</span></a>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#preview">Preview</a>
+    <a href="https://github.com" class="nav-cta">GitHub</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Powered by MLX Whisper on Apple Silicon
+  </div>
+  <h1>Video to text,<br><em>in 30 seconds</em></h1>
+  <p class="hero-sub">Paste a YouTube URL or drop a local file. ScriptGrab transcribes, translates, and delivers clean text in seconds.</p>
+
+  <div class="input-bar">
+    <input type="text" placeholder="Paste YouTube URL here..." id="urlInput">
+    <button onclick="handleTranscribe()">Transcribe</button>
+  </div>
+
+  <div class="time-range">
+    <div class="time-field">
+      <label for="startTime">Start</label>
+      <input type="text" id="startTime" placeholder="0:00">
+    </div>
+    <span class="time-sep">&mdash;</span>
+    <div class="time-field">
+      <label for="endTime">End</label>
+      <input type="text" id="endTime" placeholder="end">
+    </div>
+    <span class="time-sep"></span>
+    <div class="time-field">
+      <label for="translateLang">Translate</label>
+      <select id="translateLang">
+        <option value="ko" selected>Korean</option>
+        <option value="en">English</option>
+        <option value="ja">Japanese</option>
+        <option value="zh-CN">Chinese (Simplified)</option>
+        <option value="zh-TW">Chinese (Traditional)</option>
+        <option value="es">Spanish</option>
+        <option value="fr">French</option>
+        <option value="de">German</option>
+        <option value="pt">Portuguese</option>
+        <option value="vi">Vietnamese</option>
+        <option value="th">Thai</option>
+        <option value="id">Indonesian</option>
+        <option value="ru">Russian</option>
+        <option value="ar">Arabic</option>
+        <option value="hi">Hindi</option>
+        <option value="">None (no translation)</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="hero-or">or</p>
+
+  <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload video or audio file
+  </button>
+  <input type="file" id="fileInput" accept="video/*,audio/*" hidden>
+
+  <div class="hero-formats">
+    <span class="format-tag">YouTube</span>
+    <span class="format-tag">.mp4</span>
+    <span class="format-tag">.mkv</span>
+    <span class="format-tag">.mov</span>
+    <span class="format-tag">.mp3</span>
+    <span class="format-tag">.wav</span>
+    <span class="format-tag">.m4a</span>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-inner reveal">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title">Three steps. Zero friction.</h2>
+    <p class="section-desc">From video to polished transcript in under a minute, all processed locally on your machine.</p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </div>
+        <h3>Paste or Upload</h3>
+        <p>Drop a YouTube URL or any local video and audio file. We handle the rest.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        </div>
+        <h3>AI Transcription</h3>
+        <p>Whisper large-v3 turbo runs locally on your M-series chip. Fast, private, accurate.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h3>Get Your Script</h3>
+        <p>Clean text output with optional translation into 50+ languages via Google Translate.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="section-inner reveal">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Everything you need,<br>nothing you don't</h2>
+    <p class="section-desc">Built for speed and simplicity. No cloud uploads, no API keys, no complexity.</p>
+
+    <div class="features-grid">
+      <div class="feature">
+        <div class="feature-icon">&#9654;</div>
+        <h3>YouTube Support</h3>
+        <p>Paste any YouTube URL. Audio is extracted automatically via yt-dlp with best quality selection.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#128193;</div>
+        <h3>Local Files</h3>
+        <p>Works with mp4, mkv, mov, mp3, wav, m4a and any format ffmpeg can handle.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#127760;</div>
+        <h3>Auto Language Detection</h3>
+        <p>Whisper automatically identifies the spoken language or you can force a specific one.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#128220;</div>
+        <h3>Translation</h3>
+        <p>Translate transcripts into 50+ languages. Output both original and translated side by side.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#9889;</div>
+        <h3>Apple Silicon Native</h3>
+        <p>MLX Whisper runs directly on your M-series GPU. No CUDA needed, blazing fast inference.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">&#128274;</div>
+        <h3>Fully Local</h3>
+        <p>Everything runs on your machine. Your audio never leaves your device. Zero cloud dependency.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OUTPUT PREVIEW -->
+<section id="preview">
+  <div class="section-inner reveal">
+    <p class="section-label">Output</p>
+    <h2 class="section-title">Clean, readable transcripts</h2>
+    <p class="section-desc">Original and translated text saved as separate files, ready to use.</p>
+
+    <div class="preview-container">
+      <div class="preview-toolbar">
+        <div class="preview-dots"><span></span><span></span><span></span></div>
+        <span class="preview-file" id="previewFilename">transcript.txt</span>
+        <div class="download-btns" id="downloadBtns" style="display:none">
+          <button class="dl-btn" id="dlOriginal" onclick="downloadText('original')">Original .txt</button>
+          <button class="dl-btn" id="dlTranslated" onclick="downloadText('translated')">Korean .txt</button>
+        </div>
+      </div>
+      <div class="preview-tabs">
+        <button class="preview-tab active" onclick="switchTab(this,'full')">Full Transcript</button>
+        <button class="preview-tab" onclick="switchTab(this,'summary')">Summary</button>
+      </div>
+      <div class="preview-content" id="previewFull">
+        <div class="preview-pane">
+          <div class="pane-label"><span class="lang-dot en"></span>English &mdash; Original</div>
+          <p><span class="timestamp">[00:00]</span>Today we're going to talk about something that could fundamentally change the way we think about labor and manufacturing.</p>
+          <p><span class="timestamp">[00:12]</span>Tesla's Optimus robot has been in development for over two years now, and the progress has been remarkable.</p>
+          <p><span class="timestamp">[00:24]</span>What started as a concept on stage has evolved into a functional humanoid robot capable of performing complex tasks in real factory environments.</p>
+          <p><span class="timestamp">[00:38]</span>The key breakthrough was integrating the same neural network approach used in Tesla's self-driving technology...</p>
+        </div>
+        <div class="preview-pane">
+          <div class="pane-label"><span class="lang-dot ko"></span>Korean &mdash; Translated</div>
+          <p><span class="timestamp">[00:00]</span>오늘은 우리가 노동과 제조에 대해 생각하는 방식을 근본적으로 바꿀 수 있는 것에 대해 이야기하겠습니다.</p>
+          <p><span class="timestamp">[00:12]</span>테슬라의 옵티머스 로봇은 2년 넘게 개발되어 왔으며, 그 진전은 놀라웠습니다.</p>
+          <p><span class="timestamp">[00:24]</span>무대 위의 컨셉으로 시작된 것이 실제 공장 환경에서 복잡한 작업을 수행할 수 있는 기능적인 휴머노이드 로봇으로 발전했습니다.</p>
+          <p><span class="timestamp">[00:38]</span>핵심 돌파구는 테슬라의 자율주행 기술에 사용된 동일한 신경망 접근 방식을 통합한 것이었습니다...</p>
+        </div>
+      </div>
+      <div class="preview-content" id="previewSummary" style="display:none">
+        <div class="preview-pane" style="grid-column:1/-1" id="summaryPane">
+          <div class="pane-label"><span class="lang-dot en"></span>Summary</div>
+          <p style="color:var(--text-dim)">Transcribe a video to see the summary here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="reveal">
+    <p class="section-label">Get Started</p>
+    <h2 class="section-title">Ready to <span style="color:var(--accent)">start</span> ?</h2>
+    <div class="input-bar" style="max-width:640px;margin:2rem auto 0">
+      <input type="text" placeholder="Paste YouTube URL here..." id="urlInput2">
+      <button onclick="copyAndScrollTop()">Transcribe</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    Script<span style="color:var(--accent)">Grab</span> &nbsp;&mdash;&nbsp; Built with MLX Whisper
+  </div>
+  <div class="footer-right">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#">GitHub</a>
+  </div>
+</footer>
+
+<script>
+  const API = 'http://localhost:5001';
+  let selectedFile = null;
+  let lastResult = null;  // store for download
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Tab switch
+  function switchTab(btn, tab) {
+    document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('previewFull').style.display = tab === 'full' ? 'grid' : 'none';
+    document.getElementById('previewSummary').style.display = tab === 'summary' ? 'grid' : 'none';
+  }
+
+  // Language select color
+  document.getElementById('translateLang').addEventListener('change', function() {
+    this.classList.toggle('selected', this.value !== 'ko');
+  });
+
+  // File select
+  document.getElementById('fileInput').addEventListener('change', function() {
+    if (this.files[0]) {
+      selectedFile = this.files[0];
+      document.querySelector('.upload-btn').innerHTML =
+        '<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+        selectedFile.name;
+    }
+  });
+
+  // Download text as file
+  function downloadText(type) {
+    if (!lastResult) return;
+    const text = type === 'translated' ? lastResult.translated : lastResult.text;
+    const fname = type === 'translated' ? (lastResult.translated_file || 'translated.txt') : (lastResult.file || 'transcript.txt');
+    if (!text) return;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // Build summary from text
+  function buildSummary(data) {
+    const text = data.text || '';
+    // Clean timestamps for counting
+    const cleanText = text.replace(/\[\d+:\d+\]\s*/g, '');
+    const sentences = cleanText.match(/[^.!?]+[.!?]+/g) || [cleanText];
+    const wordCount = cleanText.split(/\s+/).length;
+
+    // Group into topic chunks (~5 sentences each), pick key sentences
+    const chunkSize = Math.max(5, Math.floor(sentences.length / 6));
+    const points = [];
+    for (let i = 0; i < sentences.length && points.length < 8; i += chunkSize) {
+      const chunk = sentences.slice(i, i + chunkSize);
+      if (!chunk.length) continue;
+      // First sentence = topic, longest = key claim
+      const intro = chunk[0].trim();
+      const key = chunk.reduce((a, b) => a.length > b.length ? a : b).trim();
+      points.push(intro);
+      if (key !== intro && key.length > 30) points.push(key);
+    }
+
+    let html = '<div class="pane-label"><span class="lang-dot en"></span>Summary</div>';
+    html += '<p><strong>' + (data.title || 'Untitled') + '</strong></p>';
+    html += '<p style="color:var(--text-dim);font-size:0.75rem;margin-bottom:1rem">' + wordCount.toLocaleString() + ' words &bull; ' + sentences.length + ' sentences</p>';
+
+    html += '<p style="margin-bottom:0.5rem"><strong>Key Points</strong></p>';
+    for (const p of points) {
+      html += '<p style="padding-left:0.75rem;border-left:2px solid var(--accent);margin-bottom:0.5rem">' + p + '</p>';
+    }
+
+    if (data.translated) {
+      const koClean = data.translated.replace(/\[\d+:\d+\]\s*/g, '');
+      const koSentences = koClean.match(/[^.!?。]+[.!?。]+/g) || [koClean];
+      const koPreview = koSentences.slice(0, 3).join(' ').trim();
+      html += '<p style="margin-top:1.5rem;margin-bottom:0.5rem"><strong>Korean Preview</strong></p>';
+      html += '<p style="padding-left:0.75rem;border-left:2px solid var(--accent)">' + koPreview + '</p>';
+    }
+    return html;
+  }
+
+  // Transcribe
+  async function handleTranscribe() {
+    const url = document.getElementById('urlInput').value.trim();
+    const btn = document.querySelector('.input-bar button');
+
+    if (!url && !selectedFile) {
+      document.getElementById('urlInput').focus();
+      return;
+    }
+
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+
+    const start = document.getElementById('startTime').value.trim();
+    const end = document.getElementById('endTime').value.trim();
+
+    const form = new FormData();
+    if (selectedFile) {
+      form.append('file', selectedFile);
+    } else {
+      form.append('url', url);
+    }
+    const lang = document.getElementById('translateLang').value;
+    if (start) form.append('start', start);
+    if (end) form.append('end', end);
+    if (lang) form.append('translate', lang);
+
+    try {
+      const res = await fetch(API + '/api/transcribe', { method: 'POST', body: form });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert('Error: ' + (data.error || 'Unknown error'));
+        return;
+      }
+
+      lastResult = data;
+
+      // Update filename
+      document.getElementById('previewFilename').textContent = data.file || 'transcript.txt';
+
+      // Show download buttons
+      const dlBtns = document.getElementById('downloadBtns');
+      dlBtns.style.display = 'flex';
+      const langNames = {ko:'Korean',en:'English',ja:'Japanese','zh-CN':'Chinese','zh-TW':'Chinese(T)',es:'Spanish',fr:'French',de:'German',pt:'Portuguese',vi:'Vietnamese',th:'Thai',id:'Indonesian',ru:'Russian',ar:'Arabic',hi:'Hindi'};
+      const selLang = document.getElementById('translateLang').value;
+      document.getElementById('dlTranslated').textContent = (langNames[selLang] || selLang) + ' .txt';
+      document.getElementById('dlTranslated').style.display = data.translated ? 'inline-block' : 'none';
+
+      // Full transcript panes
+      const fullPane = document.getElementById('previewFull');
+      const panes = fullPane.querySelectorAll('.preview-pane');
+
+      panes[0].innerHTML =
+        '<div class="pane-label"><span class="lang-dot en"></span>Original</div>' +
+        formatText(data.text);
+
+      if (data.translated) {
+        panes[1].innerHTML =
+          '<div class="pane-label"><span class="lang-dot ko"></span>Korean — Translated</div>' +
+          formatText(data.translated);
+      } else {
+        panes[1].innerHTML =
+          '<div class="pane-label"><span class="lang-dot ko"></span>Translation</div>' +
+          '<p style="color:var(--text-dim)">No translation requested</p>';
+      }
+
+      // Summary pane
+      document.getElementById('summaryPane').innerHTML = buildSummary(data);
+
+      // Scroll to preview
+      document.getElementById('preview').scrollIntoView({ behavior: 'smooth' });
+
+    } catch (e) {
+      alert('Server error. Make sure server.py is running.\n\npython src/server.py');
+    } finally {
+      btn.textContent = 'Transcribe';
+      btn.disabled = false;
+    }
+  }
+
+  function copyAndScrollTop() {
+    const val = document.getElementById('urlInput2').value.trim();
+    if (val) document.getElementById('urlInput').value = val;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => handleTranscribe(), 500);
+  }
+
+  function formatText(text) {
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    let html = '', chunk = '';
+    for (const s of sentences) {
+      chunk += s;
+      if (chunk.length > 200) {
+        html += '<p>' + chunk.trim() + '</p>';
+        chunk = '';
+      }
+    }
+    if (chunk.trim()) html += '<p>' + chunk.trim() + '</p>';
+    return html;
+  }
+</script>
+
+</body>
+</html>
