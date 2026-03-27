@@ -67,7 +67,7 @@
   }
   .nav-links a:hover{color:var(--text)}
   .nav-cta{
-    background:var(--text);color:#fff;
+    background:#111111;color:#ffffff !important;
     padding:0.5rem 1.25rem;border-radius:8px;
     font-size:0.8125rem;font-weight:500;
     text-decoration:none;transition:all .2s;
@@ -564,7 +564,7 @@
     <a href="#how">How it works</a>
     <a href="#features">Features</a>
     <a href="#preview">Preview</a>
-    <a href="https://github.com" class="nav-cta">GitHub</a>
+    <a href="https://github.com/shinyyim/scriptgrab" class="nav-cta">GitHub</a>
   </div>
 </nav>
 
@@ -784,7 +784,7 @@
 </footer>
 
 <script>
-  const API = 'http://localhost:5001';
+  const API = window.location.origin;
   let selectedFile = null;
   let lastResult = null;  // store for download
 
@@ -938,8 +938,14 @@
           '<p style="color:var(--text-dim)">No translation requested</p>';
       }
 
-      // Summary pane
-      document.getElementById('summaryPane').innerHTML = buildSummary(data);
+      // Summary pane — use Ollama summary if available
+      if (data.summary) {
+        document.getElementById('summaryPane').innerHTML =
+          '<div class="pane-label"><span class="lang-dot en"></span>AI Summary</div>' +
+          markdownToHtml(data.summary);
+      } else {
+        document.getElementById('summaryPane').innerHTML = buildSummary(data);
+      }
 
       // Scroll to preview
       document.getElementById('preview').scrollIntoView({ behavior: 'smooth' });
@@ -957,6 +963,15 @@
     if (val) document.getElementById('urlInput').value = val;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => handleTranscribe(), 500);
+  }
+
+  function markdownToHtml(md) {
+    return md
+      .replace(/^## (.+)$/gm, '<p style="font-weight:600;margin-top:1.25rem;margin-bottom:0.5rem">$1</p>')
+      .replace(/^### (.+)$/gm, '<p style="font-weight:500;margin-top:1rem;margin-bottom:0.25rem;color:var(--accent)">$1</p>')
+      .replace(/^- "(.+)"$/gm, '<p style="padding-left:0.75rem;border-left:2px solid var(--accent);margin-bottom:0.4rem;font-style:italic">"$1"</p>')
+      .replace(/^- (.+)$/gm, '<p style="padding-left:0.75rem;margin-bottom:0.3rem">&bull; $1</p>')
+      .replace(/\n\n+/g, '\n');
   }
 
   function formatText(text) {

@@ -142,6 +142,55 @@ def safe_filename(title, max_len=40):
     return "".join(c for c in title if c.isalnum() or c in (" ", "_", "-")).strip()[:max_len]
 
 
+def load_api_key():
+    """Load Anthropic API key from .env file."""
+    env_path = os.path.join(PROJECT_DIR, ".env")
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                if line.startswith("ANTHROPIC_API_KEY="):
+                    return line.strip().split("=", 1)[1]
+    return os.environ.get("ANTHROPIC_API_KEY", "")
+
+
+def summarize_with_claude(text):
+    """Summarize transcript using Claude API."""
+    import requests
+    api_key = load_api_key()
+    if not api_key:
+        return "(Summary unavailable: no API key)"
+
+    # Truncate to ~6000 words
+    words = text.split()
+    if len(words) > 6000:
+        text = " ".join(words[:6000])
+
+    try:
+        resp = requests.post("https://api.anthropic.com/v1/messages", headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }, json={
+            "model": "claude-sonnet-4-20250514",
+            "max_tokens": 1500,
+            "messages": [{"role": "user", "content": f"""이 트랜스크립트를 요약해줘. 포인트를 잡아서 논리 흐름이 있게 정리해.
+
+규칙:
+- 핵심 메시지를 먼저 한 문장으로
+- 주제별로 3-6개 섹션으로 나눠서 각각 2-3줄로 요약
+- 마지막에 한 줄 요약
+- Notable Quotes 3-5개 (영어 원문)
+- 한국어로 작성, 마크다운 포맷
+
+TRANSCRIPT:
+{text}"""}],
+        }, timeout=60)
+        data = resp.json()
+        return data["content"][0]["text"]
+    except Exception as e:
+        return f"(Summary unavailable: {e})"
+
+
 def make_output_name(title):
     """Generate filename like 20260326_Some_English_Title"""
     from deep_translator import GoogleTranslator
@@ -217,7 +266,7 @@ def save_to_reference(title, en_file, text, url=None, ko_file=None):
     ref_path = os.path.join(REF_DIR, ref_filename)
 
     word_count = len(text.split())
-    key_points = extract_key_points(text)
+    summary = summarize_with_claude(text)
 
     content = f"""---
 created: "{date_str}"
@@ -237,8 +286,7 @@ source: "{url or ''}"
 - **Words**: {word_count:,}
 - **Files**: [[{en_file}]]{'  |  [[' + ko_file + ']]' if ko_file else ''}
 
-## Key Points
-{key_points}
+{summary}
 
 ## Notes
 -
@@ -319,6 +367,10 @@ def api_transcribe():
                 f.write(header + sentences)
             result["translated"] = sentences
             result["translated_file"] = ko_file
+
+        # Summarize with Ollama
+        summary = summarize_with_claude(plain_text)
+        result["summary"] = summary
 
         # Save to Obsidian references
         save_to_reference(title, en_file, plain_text, url=source_url or None, ko_file=result.get("translated_file"))
